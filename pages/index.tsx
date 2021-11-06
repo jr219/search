@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import Grid from "@mui/material/Grid";
 import Box from '@mui/material/Box';
@@ -55,7 +54,7 @@ export default function Index() {
       {
         sites.length > 0 &&
         <Typography align="center" sx={{ marginTop: "24px" }}>
-          10 hits in a radius of 100 km
+          {`${sites.length} hits in a radius of 100 km`}
         </Typography>
       }
       <Box sx={{ flexGrow: 1 }}>

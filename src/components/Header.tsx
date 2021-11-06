@@ -3,8 +3,6 @@ import { Theme } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import useScrollTrigger from "@mui/material/useScrollTrigger";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
 import Button from "@mui/material/Button";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -14,6 +12,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import Hidden from "@mui/material/Hidden";
 import Box from "@mui/material/Box";
+import { useRouter } from "next/router";
 import { useTheme, makeStyles } from "@mui/styles";
 import Link from "../Link";
 
@@ -117,7 +116,6 @@ const useStyles = makeStyles((theme: Theme) => ({
     color: "white !important"
   },
   appbar: {
-    backgroundColor: "white",
     zIndex: theme.zIndex.modal + 1,
     paddingLeft: "4em",
     paddingRight: "4em",
@@ -130,7 +128,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 export default function Header(props) {
   const classes = useStyles(props);
-  const theme = useTheme();
+  const router = useRouter();
 
   // @ts-ignore
   const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -268,13 +266,13 @@ export default function Header(props) {
   return (
     <React.Fragment>
       <ElevationScroll>
-        <AppBar position="fixed" className={classes.appbar}>
+        <AppBar position="fixed" className={classes.appbar} color="inherit" enableColorOnDark={false}>
           <Toolbar disableGutters>
             <Button
-              component={Link}
-              href="/"
               className={classes.logoContainer}
-              onClick={() => props.setValue(0)}
+              onClick={() => {
+                router.replace("/");
+              }}
               disableRipple
               style={{ textDecoration: "none" }}
             >

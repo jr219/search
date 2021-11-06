@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import { Theme } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
@@ -10,8 +10,10 @@ import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { makeStyles } from "@mui/styles";
 import usePlacesService from "react-google-autocomplete/lib/usePlacesAutocompleteService";
-import Router from 'next/router';
+import { geocodeByPlaceId } from 'react-google-places-autocomplete';
+import Router, { useRouter } from 'next/router';
 import axios from '../lib/axios';
+
 
 const useStyles = makeStyles((theme: Theme) => ({
   container: {
@@ -74,7 +76,7 @@ interface SiteType {
 export default function SearchInput(props) {
   const { setBottomSites } = props;
   const classes = useStyles();
-  const mountedRef = useRef(true)
+  const router = useRouter();
   const [cities, setCities] = useState<readonly PlaceType[]>([]);
   const [sites, setSites] = useState<readonly SiteType[]>([]);
 
@@ -91,8 +93,6 @@ export default function SearchInput(props) {
     if (placePredictions.length > 0) {
       setCities(placePredictions.map((p) => ({ ...p, type: "Cities" })));
     }
-    // CALL YOUR API OR ASYNC FUNCTION HERE
-    return () => { mountedRef.current = false }
   }, [placePredictions]);
 
   const getSitesByName = useCallback(async (name: string) => {
@@ -158,29 +158,26 @@ export default function SearchInput(props) {
       return;
     }
 
-    getPlacePredictions({ input: inputValue, types: ["(cities)"] });
+    // https://developers.google.com/maps/documentation/javascript/reference/places-autocomplete-service
+    getPlacePredictions({ input: inputValue, types: ["(cities)"], componentRestrictions: { country: "se"} });
     await getSitesByName(inputValue);
   }, [getPlacePredictions, getSitesByName]);
 
   const options = useMemo(() => [...cities, ...sites], [cities, sites]);
 
-  const selectValue = useCallback((e, value) => {
+  const selectValue = useCallback((value) => {
     if (!value) {
       return;
     }
-    e.preventDefault();
-    console.log(value);
     if (value.type === "Cities") {
-      placesService?.getDetails(
-        {
-          placeId: value.place_id,
-        },
-        async (placeDetails) => {
-          await getSitesByLocation(placeDetails.geometry.location.lat(), placeDetails.geometry.location.lng());
-        }
-      );
+      geocodeByPlaceId(value.place_id)
+        .then(async results => {
+          let placeDeta = results[0];
+          await getSitesByLocation(placeDeta.geometry.location.lat(), placeDeta.geometry.location.lng());
+        })
+        .catch(error => console.error(error));
     } else {
-      Router.push(`/detail/${value.id}`)
+      Router.push(`/detail?id=${value.id}`)
     }
   }, []);
 
@@ -195,11 +192,13 @@ export default function SearchInput(props) {
       groupBy={(option) => option.type}
       options={options}
       noOptionsText="Please input to search site"
-      onChange={(event: any, newValue: any | null) => {
-        selectValue(event, newValue);
+      onChange={(event: React.SyntheticEvent, newValue: any | null) => {
+        event.preventDefault();
+        selectValue(newValue);
       }}
       onInputChange={(event, newInputValue) => {
-        search(newInputValue);
+        if (event.type === "change") //e.type = "click" when option is selected
+          search(newInputValue);
       }}
       renderInput={(params) => (
         <Paper
